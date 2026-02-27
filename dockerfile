@@ -27,6 +27,12 @@ RUN wget "https://download1654.mediafire.com/homf35pfe6sgmDRVxao9o76NfJS_P-cU5Y9
 RUN export NODE_OPTIONS=--openssl-legacy-provider && \
     yarn build:production
 
+# Configurar cliente MariaDB para no exigir SSL (Fix ERROR 2026)
+RUN mkdir -p /etc/my.cnf.d && \
+    echo "[client]" > /etc/my.cnf.d/nossl.cnf && \
+    echo "ssl=0" >> /etc/my.cnf.d/nossl.cnf && \
+    echo "ssl-verify-server-cert=0" >> /etc/my.cnf.d/nossl.cnf
+
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
