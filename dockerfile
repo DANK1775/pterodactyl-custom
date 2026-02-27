@@ -21,9 +21,10 @@ RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/rele
 
 
 # install arix theme (only files)
-RUN wget "https://download1654.mediafire.com/kdguzlgatz2gYZtP0FhVgldH0DtpmbLzMUlvrOTtxTgRo4SvJ-Cr4f9GOhPUwh-wfJ29aEYpO1Up2QJIEi0LA5V90NpoNd_KsjbS58lylFrrrEt7XMWR93QC0cZgYlktY0xfkNRi2_J3CXa1vvBv2PzJR_83v6xo58R01Xs5Ic4JOQk/6oannuzfkkqc1h1/Arix+Theme+v2.0.6.zip" -O arix-theme.zip &&\
-    unzip -o arix-theme.zip -d /app/ && \
-    rm arix-theme.zip
+RUN wget "https://download1654.mediafire.com/kdguzlgatz2gYZtP0FhVgldH0DtpmbLzMUlvrOTtxTgRo4SvJ-Cr4f9GOhPUwh-wfJ29aEYpO1Up2QJIEi0LA5V90NpoNd_KsjbS58lylFrrrEt7XMWR93QC0cZgYlktY0xfkNRi2_J3CXa1vvBv2PzJR_83v6xo58R01Xs5Ic4JOQk/6oannuzfkkqc1h1/Arix+Theme+v2.0.6.zip" -O arix-theme.zip && \
+    unzip -o arix-theme.zip -d /tmp/arix && \
+    cp -rf /tmp/arix/pterodactyl/* /app/ && \
+    rm -rf /tmp/arix arix-theme.zip
 
 # build assets
 RUN export NODE_OPTIONS=--openssl-legacy-provider && \
