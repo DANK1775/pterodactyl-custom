@@ -1,12 +1,11 @@
 x-common:
   database:
-    &db-environment
     # Do not remove the "&db-password" from the end of the line below, it is important
     # for Panel functionality.
+    &db-environment
     MYSQL_PASSWORD: &db-password "CHANGE_ME"
     MYSQL_ROOT_PASSWORD: "CHANGE_ME_TOO"
-  panel:
-    &panel-environment
+  panel: &panel-environment
     APP_URL: "http://example.com"
     # A list of valid timezones can be found here: http://php.net/manual/en/timezones.php
     APP_TIMEZONE: "UTC"
@@ -14,8 +13,11 @@ x-common:
     # Uncomment the line below and set to a non-empty value if you want to use Let's Encrypt
     # to generate an SSL certificate for the Panel.
     # LE_EMAIL: ""
-  mail:
-    &mail-environment
+
+    #Arix license:
+    ARIX_LICENSE_KEY: "CHANGE_ME_ARIX_LICENSE_KEY"
+
+  mail: &mail-environment
     MAIL_FROM: "noreply@example.com"
     MAIL_DRIVER: "smtp"
     MAIL_HOST: "mail"
@@ -42,11 +44,13 @@ services:
       <<: *db-environment
       MYSQL_DATABASE: "panel"
       MYSQL_USER: "pterodactyl"
+
   cache:
     image: redis:alpine
     restart: always
+
   panel:
-    image: ghcr.io/pterodactyl/panel:latest
+    image: ghcr.io/dank1775/pterodactyl-custom:latest
     restart: always
     ports:
       - "80:80"
@@ -60,7 +64,7 @@ services:
       - "/srv/pterodactyl/certs/:/etc/letsencrypt/"
       - "/srv/pterodactyl/logs/:/app/storage/logs"
     environment:
-      <<: [*panel-environment, *mail-environment]
+      <<: [ *panel-environment, *mail-environment ]
       DB_PASSWORD: *db-password
       APP_ENV: "production"
       APP_ENVIRONMENT_ONLY: "false"
@@ -70,6 +74,20 @@ services:
       REDIS_HOST: "cache"
       DB_HOST: "database"
       DB_PORT: "3306"
+
+#arix installation process
+  arix-installer:
+    image: ghcr.io/dank1775/pterodactyl-custom:latest
+    depends_on:
+      - database
+    command: sh -c "sleep 15 && php artisan arix install"
+    environment:
+      <<: [ *panel-environment, *mail-environment ]
+      DB_PASSWORD: *db-password
+      DB_HOST: "database"
+      DB_PORT: "3306"
+      APP_ENV: "production"
+
 networks:
   default:
     ipam:
