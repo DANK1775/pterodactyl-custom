@@ -10,16 +10,18 @@ RUN apk update && \
     npm i -g yarn && \
     yarn install --frozen-lockfile
 
-# download only files of blueprint
+# NO BORRAR blueprint.sh para que se pueda usar como herramienta CLI dentro del contenedor
 RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/releases/latest | grep 'browser_download_url' | grep 'release.zip' | cut -d '"' -f 4) && \
     wget "$URL" -O release.zip && \
     unzip -o release.zip && \
     chmod +x blueprint.sh && \
-    bash blueprint.sh && \
-    rm release.zip blueprint.sh
+    yarn add cross-env && \
+    bash blueprint.sh -i blueprint && \
+    rm release.zip
+
 
 # install arix theme (only files)
-RUN wget "https://download1654.mediafire.com/7wvj4q1u4cag9tBQWubPFy7PAHpX5UTFZqCfXMvxLtdKWFo-4DNVXk7Iys2ejra06I_sH5y0cjmRnvq60hFVCdxJKnReE8cYDNn3XKOSfJYOcsi8jBSH8e0Us4f96d-JCQRgBJ8zKgbCIjo5Z5kWJSZIGXZK7c8Opwwug6QLx3Qdjh0/6oannuzfkkqc1h1/Arix+Theme+v2.0.6.zip" -O arix-theme.zip &&\
+RUN wget "https://download1654.mediafire.com/kdguzlgatz2gYZtP0FhVgldH0DtpmbLzMUlvrOTtxTgRo4SvJ-Cr4f9GOhPUwh-wfJ29aEYpO1Up2QJIEi0LA5V90NpoNd_KsjbS58lylFrrrEt7XMWR93QC0cZgYlktY0xfkNRi2_J3CXa1vvBv2PzJR_83v6xo58R01Xs5Ic4JOQk/6oannuzfkkqc1h1/Arix+Theme+v2.0.6.zip" -O arix-theme.zip &&\
     unzip -o arix-theme.zip -d /app/ && \
     rm arix-theme.zip
 
