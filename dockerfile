@@ -6,36 +6,30 @@ WORKDIR /app
 
 # install dependencies and blueprint
 RUN apk update && \
-    apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn ncurses&& \
+    apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn ncurses && \
     npm i -g yarn && \
     yarn install --frozen-lockfile
 
+# download only files of blueprint
 RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/releases/latest | grep 'browser_download_url' | grep 'release.zip' | cut -d '"' -f 4) && \
     wget "$URL" -O release.zip && \
-    unzip -o release.zip
-
-RUN echo 'WEBUSER="nginx";' > /app/.blueprintrc && \
-    echo 'OWNERSHIP="nginx:nginx";' >> /app/.blueprintrc && \
-    echo 'USERSHELL="/bin/ash";' >> /app/.blueprintrc && \
-    echo 'FOLDER="/app";' >> /app/.blueprintrc
-
-
-RUN chmod +x blueprint.sh && \
+    unzip -o release.zip && \
+    chmod +x blueprint.sh && \
     bash blueprint.sh && \
-    rm release.zip blueprint.sh .blueprintrc
+    rm release.zip blueprint.sh
 
-# install arix theme (cambiar esto despues por una url mejor)
+# install arix theme (only files)
 RUN wget "https://files.catbox.moe/9kkfpt.zip" -O arix-theme.zip &&\
     unzip -o arix-theme.zip -d /app/ && \
     rm arix-theme.zip
+
+# build assets
 RUN export NODE_OPTIONS=--openssl-legacy-provider && \
     yarn build:production
 
-# 5. install pluguins and themes (.blueprint)
-# RUN wget https://grrr.com/loquesea.blueprint -O loquesea.blueprint && \
-#     blueprint -i loquesea && \
-#     rm loquesea.blueprint
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Clean cache
-RUN chown -R nginx:nginx /app/* && \
-    rm -rf /var/cache/apk/*
+# run entrypoint script (migration and setup) and then start supervisor
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["supervisord", "-n", "-c", "/etc/supervisord.conf"]

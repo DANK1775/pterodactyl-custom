@@ -50,7 +50,7 @@ services:
     restart: always
 
   panel:
-    # Recuerda cambiar esta línea por el nombre de TU imagen generada en GitHub
+    # Usamos la imagen generada por tu workflow de GitHub
     image: ghcr.io/dank1775/pterodactyl-custom:latest
     restart: always
     ports:
@@ -75,29 +75,6 @@ services:
       REDIS_HOST: "cache"
       DB_HOST: "database"
       DB_PORT: "3306"
-
-#pluguins, addons and themes installation process
-installer:
-    image: ghcr.io/dank1775/pterodactyl-custom:latest
-    depends_on:
-      - database
-    command: >
-      sh -c "sleep 15 &&
-      php artisan down &&
-      php artisan view:clear &&
-      php artisan config:clear &&
-      php artisan arix install &&
-      php artisan migrate --seed --force &&
-      php artisan optimize:clear &&
-      php artisan optimize &&
-      php artisan queue:restart &&
-      php artisan up"
-    environment:
-      <<: [*panel-environment, *mail-environment]
-      DB_PASSWORD: *db-password
-      DB_HOST: "database"
-      DB_PORT: "3306"
-      APP_ENV: "production"
 
 networks:
   default:
