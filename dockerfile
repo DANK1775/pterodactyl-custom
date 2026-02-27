@@ -28,10 +28,20 @@ RUN export NODE_OPTIONS=--openssl-legacy-provider && \
     yarn build:production
 
 # Configurar cliente MariaDB para no exigir SSL (Fix ERROR 2026)
+# NOTA DE SEGURIDAD: Esto deshabilita SSL para la conexión entre Panel -> Base de Datos (interna en Docker).
+# Es necesario porque el contenedor de MariaDB por defecto no tiene certificados configurados y el cliente
+# nuevo rechaza conexiones planas.
+#
+# SI EN EL FUTURO QUIERES FORZAR SSL/TLS EN PRODUCCIÓN:
+# 1. Configura certificados SSL válidos en el servicio de 'database' (mariadb) en docker-compose.yml.
+# 2. Elimina o comenta el siguiente bloque RUN.
 RUN mkdir -p /etc/my.cnf.d && \
     echo "[client]" > /etc/my.cnf.d/nossl.cnf && \
     echo "ssl=0" >> /etc/my.cnf.d/nossl.cnf && \
     echo "ssl-verify-server-cert=0" >> /etc/my.cnf.d/nossl.cnf
+
+# Crear directorio de logs de supervisord
+RUN mkdir -p /var/log/supervisord
 
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
