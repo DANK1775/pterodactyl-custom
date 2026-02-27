@@ -7,7 +7,7 @@ WORKDIR /app
 # install dependencies and blueprint
 RUN apk update && \
     apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn && \
-    npm i -g yarn && \
+    npm i -g yarn ncurses && \
     yarn install --frozen-lockfile
 
 RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/releases/latest | grep 'browser_download_url' | grep 'release.zip' | cut -d '"' -f 4) && \
