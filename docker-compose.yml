@@ -83,9 +83,15 @@ installer:
       - database
     command: >
       sh -c "sleep 15 &&
-      php artisan optimize:clear &&
+      php artisan down &&
+      php artisan view:clear &&
+      php artisan config:clear &&
+      php artisan arix install &&
       php artisan migrate --seed --force &&
-      php artisan arix install"
+      php artisan optimize:clear &&
+      php artisan optimize &&
+      php artisan queue:restart &&
+      php artisan up"
     environment:
       <<: [*panel-environment, *mail-environment]
       DB_PASSWORD: *db-password
