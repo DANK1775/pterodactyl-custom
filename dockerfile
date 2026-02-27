@@ -21,7 +21,7 @@ RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/rele
 
 
 # install arix theme (only files)
-RUN wget "https://download1654.mediafire.com/kdguzlgatz2gYZtP0FhVgldH0DtpmbLzMUlvrOTtxTgRo4SvJ-Cr4f9GOhPUwh-wfJ29aEYpO1Up2QJIEi0LA5V90NpoNd_KsjbS58lylFrrrEt7XMWR93QC0cZgYlktY0xfkNRi2_J3CXa1vvBv2PzJR_83v6xo58R01Xs5Ic4JOQk/6oannuzfkkqc1h1/Arix+Theme+v2.0.6.zip" -O arix-theme.zip && \
+RUN wget "https://download1654.mediafire.com/pjaa9xov3jcgBlZ4t0l4M96mq2HvB9s8rES1iOtFD7dYnfL5cVsoxJZD4FfKUZO_7c0hUCmg9BVH97SCn3GRvoxJOk_fHSkD2a181U6wPrqATMPcBa3WUGzVNM0p8MsSCgpkPqHeR4nP5dmqKpgrXBmTZo1JSah9mNwUi44fJ1wfiTU/6oannuzfkkqc1h1/Arix+Theme+v2.0.6.zip" -O arix-theme.zip && \
     unzip -o arix-theme.zip -d /tmp/arix && \
     cp -rf /tmp/arix/pterodactyl/* /app/ && \
     rm -rf /tmp/arix arix-theme.zip
