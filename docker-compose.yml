@@ -53,6 +53,7 @@ services:
     # Usamos la imagen generada por tu workflow de GitHub
     image: ghcr.io/dank1775/pterodactyl-custom:latest
     restart: always
+    env_file: .env
     ports:
       - "80:80"
       - "443:443"
@@ -64,6 +65,9 @@ services:
       - "/srv/pterodactyl/nginx/:/etc/nginx/http.d/"
       - "/srv/pterodactyl/certs/:/etc/letsencrypt/"
       - "/srv/pterodactyl/logs/:/app/storage/logs"
+      # Montamos el .env también como volumen para asegurar que artisan lo vea si falla env_file
+      # Nota: env_file pasa las variables al proceso, pero si artisan busca el archivo físico, esto ayuda.
+      - "/srv/pterodactyl/.env:/app/.env"
     environment:
       <<: [ *panel-environment, *mail-environment ]
       DB_PASSWORD: *db-password

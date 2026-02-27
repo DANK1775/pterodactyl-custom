@@ -6,7 +6,7 @@ WORKDIR /app
 
 # install dependencies and blueprint
 RUN apk update && \
-    apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn ncurses && \
+    apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn ncurses mysql-client && \
     npm i -g yarn && \
     yarn install --frozen-lockfile
 
