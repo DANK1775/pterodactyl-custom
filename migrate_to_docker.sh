@@ -21,7 +21,7 @@ mkdir -p "$BACKUP_DIR"
 echo "🛑 Deteniendo servicios (nginx, php-fpm, pteroq)..."
 systemctl stop pteroq.service || true
 systemctl stop nginx || true
-systemctl stop php8.1-fpm || true # Ajustar versión de PHP si es necesario
+systemctl stop php8.3-fpm || true # Ajustar versión de PHP si es necesario
 
 # 2. Backup de Base de Datos
 echo "💾 Exportando base de datos..."
@@ -29,13 +29,12 @@ echo "💾 Exportando base de datos..."
 DB_USER=$(grep DB_USERNAME $PTERO_DIR/.env | cut -d '=' -f2)
 DB_PASS=$(grep DB_PASSWORD $PTERO_DIR/.env | cut -d '=' -f2)
 DB_NAME=$(grep DB_DATABASE $PTERO_DIR/.env | cut -d '=' -f2)
-
 if [ -z "$DB_PASS" ]; then
     echo "❌ No se pudo leer la contraseña de la DB del archivo .env"
     echo "Por favor ingresa la contraseña de root de MySQL para hacer el dump:"
-    mysqldump -u root -p panel > "$BACKUP_DIR/panel_dump.sql"
+    mysqldump -h 127.0.0.1 -u root -p panel > "$BACKUP_DIR/panel_dump.sql"
 else
-    mysqldump -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$BACKUP_DIR/panel_dump.sql"
+    mysqldump -h 127.0.0.1 -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$BACKUP_DIR/panel_dump.sql"
 fi
 
 echo "✅ Base de datos exportada a $BACKUP_DIR/panel_dump.sql"
@@ -57,7 +56,7 @@ mkdir -p "$DOCKER_DIR/database" # Volumen para MariaDB
 # Mover datos al volumen de docker
 echo "🚚 Migrando datos a volúmenes de Docker..."
 cp "$BACKUP_DIR/.env" "$DOCKER_DIR/.env"
-cp -r "$BACKUP_DIR/storage/*" "$DOCKER_DIR/var/" # Mapeo típico: /app/var -> volumen interno
+cp -rp "$BACKUP_DIR/storage/." "$DOCKER_DIR/storage/" # Mapeo típico: /app/var -> volumen interno
 
 # Importante: Permisos
 echo "🔑 Ajustando permisos..."
@@ -68,11 +67,10 @@ chmod -R 755 "$DOCKER_DIR/var"
 echo "✅ Migración de archivos completada."
 echo "----------------------------------------------------"
 echo "PASOS SIGUIENTES:"
-echo "1. Copia tu 'docker-compose.yml', 'Dockerfile' y 'entrypoint.sh' a '$DOCKER_DIR'."
-echo "2. IMPORTANTE: Edita '$DOCKER_DIR/docker-compose.yml' y actualiza MYSQL_PASSWORD con tu contraseña real:"
-echo "   Contraseña detectada: $DB_PASS"
-echo "3. Mueve el dump SQL '$BACKUP_DIR/panel_dump.sql' a '$DOCKER_DIR/database_init/dump.sql' (crea la carpeta si no existe) o impórtalo manualmente después de levantar el contenedor."
+echo "1. Copia tu 'docker-compose.yml' y 'Dockerfile' a '$DOCKER_DIR'."
+echo "2. Mueve el dump SQL '$BACKUP_DIR/panel_dump.sql' a '$DOCKER_DIR/database_init/dump.sql' (crea la carpeta si no existe) o impórtalo manualmente después de levantar el contenedor."
 echo "   Nota: Si usas la imagen oficial de MariaDB, puedes poner el .sql en /docker-entrypoint-initdb.d/ para que se importe al inicio."
-echo "4. Ejecuta 'docker-compose up -d --build' en '$DOCKER_DIR'."
-echo "5. Verifica los logs con 'docker-compose logs -f'."
+echo "3. Ejecuta 'docker-compose up -d --build' en '$DOCKER_DIR'."
+echo "4. Verifica los logs con 'docker-compose logs -f'."
 echo "----------------------------------------------------"
+
