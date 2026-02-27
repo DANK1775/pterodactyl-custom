@@ -19,7 +19,7 @@ RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/rele
     rm release.zip blueprint.sh
 
 # install arix theme (only files)
-RUN wget "https://download1654.mediafire.com/vhn7rfovvorgtkm_f74S327liaijY-DEIBgCmgeU9oG6FN-UA5TaOvuBYSs1tG38KbrDO_r7w0DcQNFwNxVDXXoyLtJLKs-ptT_gfQ9xu8sqzBvvJdgEuqqZQLFgUTfgnWYCjiZ5UMmWIDHgJxbUFnP83joQAzw4nQQNsx8FDhbL5jA/6oannuzfkkqc1h1/Arix+Theme+v2.0.6.zip" -O arix-theme.zip &&\
+RUN wget "https://download1654.mediafire.com/homf35pfe6sgmDRVxao9o76NfJS_P-cU5Y9VSBlcoxCYx7Jxk5jZj5W-crwklbOngvuw3FzBTEX0O1_mXiy1rzemfH61AUUROd0s944ZtdGLNMA5Zx1wB3opdJU9N3cPwwB2B-zPXZQu9zi1E0tfzLs0U2mscWVRrp5q_4NqTe6jPqs/6oannuzfkkqc1h1/Arix+Theme+v2.0.6.zip" -O arix-theme.zip &&\
     unzip -o arix-theme.zip -d /app/ && \
     rm arix-theme.zip
 
