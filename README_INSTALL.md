@@ -1,184 +1,148 @@
-# Guía de Instalación y Gestión: Pterodactyl Custom (Docker)
+# Guía de Instalación y Migración Completa: Pterodactyl Custom (Docker)
 
-Este documento detalla los pasos para instalar, configurar y administrar tu panel Pterodactyl personalizado con Docker (incluye Blueprint y Arix Theme).
+Esta guía unifica el proceso de migración desde Bare Metal y la instalación limpia en Docker.
+**Ruta de trabajo recomendada:** `/srv/pterodactyl` (Todo centralizado).
 
 ---
 
-## 🗑️ Guía de Limpieza Total (Empezar de 0)
+## 🔄 Fase 1: Migración (Solo si vienes de Bare Metal)
 
-**⚠️ ADVERTENCIA:** Estos comandos borrarán TODOS los datos (base de datos, configuraciones, certificados) de la instalación actual. Asegúrate de tener backups.
+Si ya tienes un panel instalado "a la antigua" (sin Docker) y quieres pasarlo a Docker:
 
-1. **Ir al directorio del proyecto:**
+1. **Sube el script de migración al servidor:**
+    Sube `migrate_to_docker.sh` a tu servidor (por SFTP o curl).
+
+2. **Ejecuta el script (COMO ROOT):**
+    Este script detendrá tus servicios antiguos, hará backup de la BD, moverá los archivos a `/srv/pterodactyl` y ajustará permisos.
 
     ```bash
-    cd ~/pterodactyl
+    chmod +x migrate_to_docker.sh
+    sudo ./migrate_to_docker.sh
     ```
 
-2. **Detener y eliminar contenedores y redes:**
+    *Sigue las instrucciones en pantalla. Anota la contraseña de BD que te muestra al final.*
+
+3. **Mover archivos de proyecto:**
+    El script preparó la carpeta `/srv/pterodactyl`. Ahora mueve tus archivos de configuración Docker allí:
 
     ```bash
-    sudo docker compose down
-    ```
+    # Asumiendo que subiste docker-compose.yml, Dockerfile, entrypoint.sh a tu home (~)
+    sudo mv ~/docker-compose.yml /srv/pterodactyl/
+    sudo mv ~/Dockerfile /srv/pterodactyl/
+    sudo mv ~/entrypoint.sh /srv/pterodactyl/
 
-3. **Eliminar volúmenes de datos persistentes:**
-    Aquí es donde viven la base de datos y los archivos del panel.
-
-    ```bash
-    # Borrar la base de datos
-    sudo rm -rf /srv/pterodactyl/database/*
-
-    # Borrar archivos del panel (logs, configuración nginx, certificados, etc.)
-    sudo rm -rf /srv/pterodactyl/var/*
-    sudo rm -rf /srv/pterodactyl/nginx/*
-    sudo rm -rf /srv/pterodactyl/certs/*
-    sudo rm -rf /srv/pterodactyl/logs/*
-
-    # Opcional: Borrar el .env si quieres reconfigurarlo desde cero
-    # sudo rm /srv/pterodactyl/.env
-    ```
-
-4. **Limpiar sistema Docker (Opcional pero recomendado):**
-
-    ```bash
-    sudo docker system prune -a -f
+    # Ve al directorio de trabajo definitivo
+    cd /srv/pterodactyl
     ```
 
 ---
 
-## 🚀 Guía de Instalación desde Cero
+## 🚀 Fase 2: Instalación Limpia (O continuación de migración)
+
+Si empiezas de cero (sin datos previos), salta la Fase 1 y empieza aquí.
 
 ### 1. Preparación del Sistema
 
-1. Crea el directorio de trabajo en tu usuario:
-
-    ```bash
-    mkdir -p ~/pterodactyl
-    cd ~/pterodactyl
-    ```
-
-2. Crea los directorios de persistencia (Volúmenes):
-
-    ```bash
-    sudo mkdir -p /srv/pterodactyl/var
-    sudo mkdir -p /srv/pterodactyl/nginx
-    sudo mkdir -p /srv/pterodactyl/certs
-    sudo mkdir -p /srv/pterodactyl/logs
-    sudo mkdir -p /srv/pterodactyl/database
-    ```
-
-### 2. Archivos Necesarios
-
-Debes tener los siguientes archivos en `~/pterodactyl`:
-
-* `docker-compose.yml`
-* `Dockerfile`
-* `entrypoint.sh`
-* `.env` (Este archivo contiene tus secretos).
-
-**Si vienes de una migración:**
-Copia el `.env` generado por el script de migración a esta carpeta y también a la ruta de volúmenes:
+Crea la estructura de carpetas (Solo si NO hiciste la Fase 1):
 
 ```bash
-# Copia a la carpeta actual para que docker-compose lo lea
-cp /srv/pterodactyl/.env .
-
-# Asegura que exista en el volumen (crítico para artisan)
-sudo cp .env /srv/pterodactyl/.env
+sudo mkdir -p /srv/pterodactyl/var
+sudo mkdir -p /srv/pterodactyl/nginx
+sudo mkdir -p /srv/pterodactyl/certs
+sudo mkdir -p /srv/pterodactyl/logs
+sudo mkdir -p /srv/pterodactyl/database
+cd /srv/pterodactyl
+# (Aquí debes subir o crear tu docker-compose.yml, Dockerfile, entrypoint.sh y .env)
 ```
 
-### 3. Configuración de Contraseñas (CRÍTICO)
+### 2. Configuración de Secretos (CRÍTICO)
 
-1. Abre tu archivo `.env` y busca la contraseña de la base de datos:
+1. **Verifica tu archivo .env:**
+    Asegúrate de tener un archivo `.env` en `/srv/pterodactyl/`.
+    Si vienes de migración, el script ya lo puso ahí.
+    Si es instalación limpia, crea uno nuevo.
 
-    ```bash
-    grep DB_PASSWORD .env
-    ```
+2. **Sincronizar Contraseña de Base de Datos:**
+    El `docker-compose.yml` debe tener la MISMA contraseña que el `.env`.
 
-    *(Copia el valor que aparece después del signo =)*
+    * **Obtén la contraseña real:**
 
-2. Edita el `docker-compose.yml`:
+        ```bash
+        grep DB_PASSWORD .env
+        ```
 
-    ```bash
-    nano docker-compose.yml
-    ```
+    * **Edita el docker-compose:**
 
-3. Busca la sección `x-common` -> `database` y reemplaza `"CHANGE_ME"` por la contraseña que copiaste:
+        ```bash
+        nano docker-compose.yml
+        ```
 
-    ```yaml
-    MYSQL_PASSWORD: &db-password "TU_CONTRASEÑA_DEL_ENV"
-    ```
+    * **Cambia:** `MYSQL_PASSWORD: "CHANGE_ME"` por la contraseña obtenida.
 
-4. Guarda (`Ctrl+O`, `Enter`) y sal (`Ctrl+X`).
+### 3. Construcción y Despliegue
 
-### 4. Construcción y Despliegue
-
-1. Dale permisos de ejecución al entrypoint:
+1. **Permisos:**
 
     ```bash
     sudo chmod +x entrypoint.sh
     ```
 
-2. Construye la imagen y levanta los contenedores:
+2. **Iniciar Docker:**
 
     ```bash
-    # El flag --build fuerza a reconstruir la imagen con los últimos cambios del Dockerfile
+    # --build asegura que se use la última versión de tu Dockerfile
     sudo docker compose up -d --build
     ```
 
-3. Verifica el estado:
+3. **Verificar Logs (Espera a que termine):**
+    El contenedor hará migraciones e instalará Arix automáticamente al iniciar.
 
     ```bash
-    sudo docker compose ps
+    sudo docker compose logs -f panel
     ```
 
-### 5. Monitoreo de Primera Ejecución (Importante)
-
-El contenedor realizará tareas automáticas al iniciar (migraciones, instalación de Arix, etc.). Sigue el proceso:
-
-```bash
-sudo docker compose logs -f panel
-```
-
-**Debes esperar hasta ver:** `Iniciando Pterodactyl...`.
-Si ves errores de conexión a SQL, revisa el paso 3.
+    *Busca el mensaje: "Iniciando Pterodactyl..."*
 
 ---
 
-## 📦 Restaurar Backup de Base de Datos (Si migraste)
+## 📦 Fase 3: Importar Base de Datos (Solo Migración)
 
-Como la base de datos se crea vacía en una instalación limpia, debes importar tus datos antiguos.
+Si migraste, tu base de datos Docker estará vacía al inicio. Tienes que importar el backup que hizo el script.
 
-1. Asegúrate de que el panel ya inició al menos una vez (para que cree la estructura básica).
-2. Copia tu archivo `.sql` al contenedor de base de datos:
+1. **Localiza el backup:**
+    El script te dijo dónde quedó (ej. `/root/pterodactyl_backup_FECHA/panel_dump.sql`).
 
-    ```bash
-    # Asumiendo que tu backup se llama panel_dump.sql y está en la carpeta actual
-    sudo docker cp panel_dump.sql pterodactyl-database-1:/tmp/backup.sql
-    ```
-
-3. Importa el backup:
+2. **Importar:**
 
     ```bash
-    # Te pedirá la contraseña (la que pusiste en el paso 3)
+    # Copia el backup al contenedor (Ajusta la ruta del backup según corresponda)
+    sudo docker cp /root/pterodactyl_backup_XXXX/panel_dump.sql pterodactyl-database-1:/tmp/backup.sql
+
+    # Importa (Usa la contraseña que configuraste en el paso 2)
     sudo docker exec -it pterodactyl-database-1 sh -c 'mysql -u root -p panel < /tmp/backup.sql'
     ```
 
 ---
 
-## 🛠️ Comandos de Mantenimiento
+## 🗑️ Zona de Peligro: Borrar Todo y Empezar de 0
 
-**Reiniciar el panel:**
-
-```bash
-sudo docker compose restart panel
-```
-
-**Ejecutar comandos de Artisan (Pterodactyl):**
+**⚠️ COMANDOS DESTRUCTIVOS** - Úsalos si algo salió muy mal y quieres reiniciar la instalación limpia.
 
 ```bash
-sudo docker compose exec panel php artisan [comando]
-# Ejemplo: Crear usuario admin
-sudo docker compose exec panel php artisan p:user:make
-# Ejemplo: Limpiar caché
-sudo docker compose exec panel php artisan optimize:clear
+cd /srv/pterodactyl
+
+# 1. Apagar contenedores
+sudo docker compose down
+
+# 2. Borrar volúmenes de datos (BD y archivos del panel)
+sudo rm -rf /srv/pterodactyl/database/*
+sudo rm -rf /srv/pterodactyl/var/*
+sudo rm -rf /srv/pterodactyl/nginx/*
+sudo rm -rf /srv/pterodactyl/certs/*
+sudo rm -rf /srv/pterodactyl/logs/*
+
+# 3. Limpiar Docker (Opcional)
+sudo docker system prune -f
 ```
+
+Una vez limpio, vuelve al paso "Fase 2: Instalación Limpia".
