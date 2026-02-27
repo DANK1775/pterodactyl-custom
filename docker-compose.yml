@@ -76,14 +76,18 @@ services:
       DB_HOST: "database"
       DB_PORT: "3306"
 
-#arix installation process
-  arix-installer:
+#pluguins, addons and themes installation process
+installer:
     image: ghcr.io/dank1775/pterodactyl-custom:latest
     depends_on:
       - database
-    command: sh -c "sleep 15 && php artisan arix install"
+    command: >
+      sh -c "sleep 15 &&
+      php artisan optimize:clear &&
+      php artisan migrate --seed --force &&
+      php artisan arix install"
     environment:
-      <<: [ *panel-environment, *mail-environment ]
+      <<: [*panel-environment, *mail-environment]
       DB_PASSWORD: *db-password
       DB_HOST: "database"
       DB_PORT: "3306"
