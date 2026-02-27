@@ -1,27 +1,34 @@
 FROM ghcr.io/pterodactyl/panel:latest
 
 USER root
+
 WORKDIR /app
 
+# install dependencies and blueprint
 RUN apk update && \
-    apk add --no-cache bash curl wget unzip tar sed nodejs yarn && \
-    rm -rf /var/cache/apk/*
+    apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn && \
+    npm i -g yarn && \
+    yarn install --frozen-lockfile
 
-# 4. Descargar, instalar Blueprint y borrar el instalador
-RUN wget https://github.com/teamblueprint/main/releases/latest/download/blueprint.zip -O blueprint.zip && \
-    unzip -o blueprint.zip && \
-    chmod +x blueprint.sh && \
+RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/releases/latest | grep 'browser_download_url' | grep 'release.zip' | cut -d '"' -f 4) && \
+    wget "$URL" -O release.zip && \
+    unzip -o release.zip
+
+RUN echo 'WEBUSER="nginx";' > /app/.blueprintrc && \
+    echo 'OWNERSHIP="nginx:nginx";' >> /app/.blueprintrc && \
+    echo 'USERSHELL="/bin/ash";' >> /app/.blueprintrc && \
+    echo 'FOLDER="/app";' >> /app/.blueprintrc
+
+
+RUN chmod +x blueprint.sh && \
     bash blueprint.sh && \
-    # BORRAR ARCHIVOS RESIDUALES DE BLUEPRINT
-    rm blueprint.zip blueprint.sh
+    rm release.zip blueprint.sh .blueprintrc
 
-# 5. Descargar plugins, moverlos, instalarlos y limpiar
-# Ejemplo estático de cómo se vería un plugin
-RUN wget https://ejemplo.com/descarga/tema-oscuro.blueprint -O tema-oscuro.blueprint && \
-    # Blueprint instala el archivo .blueprint
-    blueprint -i tema-oscuro && \
-    # BORRAR EL ARCHIVO .blueprint DESPUÉS DE INSTALAR
-    rm tema-oscuro.blueprint
+# 5. install pluguins and themes (.blueprint)
+# RUN wget https://grrr.com/loquesea.blueprint -O loquesea.blueprint && \
+#     blueprint -i loquesea && \
+#     rm loquesea.blueprint
 
-# 6. Devolver permisos al usuario de Nginx/PHP (Crítico para que el panel web no dé Error 500)
-RUN chown -R nginx:nginx /app/*
+# Clean cache
+RUN chown -R nginx:nginx /app/* && \
+    rm -rf /var/cache/apk/*
