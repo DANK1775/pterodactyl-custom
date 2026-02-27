@@ -50,6 +50,7 @@ services:
     restart: always
 
   panel:
+    # Recuerda cambiar esta línea por el nombre de TU imagen generada en GitHub
     image: ghcr.io/dank1775/pterodactyl-custom:latest
     restart: always
     ports:

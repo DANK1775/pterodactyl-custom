@@ -24,6 +24,13 @@ RUN chmod +x blueprint.sh && \
     bash blueprint.sh && \
     rm release.zip blueprint.sh .blueprintrc
 
+# install arix theme (cambiar esto despues por una url mejor)
+RUN wget "https://github.com/geomakeshost/arix-theme/raw/refs/heads/main/Arix%20Theme%20v2.0.6.zip" -O arix-theme.zip &&\
+    unzip -o arix-theme.zip -d /app/ && \
+    rm arix-theme.zip
+RUN export NODE_OPTIONS=--openssl-legacy-provider && \
+    yarn build:production
+
 # 5. install pluguins and themes (.blueprint)
 # RUN wget https://grrr.com/loquesea.blueprint -O loquesea.blueprint && \
 #     blueprint -i loquesea && \
