@@ -16,8 +16,10 @@ RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/rele
     unzip -o release.zip && \
     chmod +x blueprint.sh && \
     yarn add cross-env && \
+    cp .env.example .env && \
+    php artisan key:generate --force && \
     bash blueprint.sh -i blueprint && \
-    rm release.zip
+    rm release.zip && rm .env
 
 # build assets
 RUN export NODE_OPTIONS=--openssl-legacy-provider && \
