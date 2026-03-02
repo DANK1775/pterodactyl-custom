@@ -20,7 +20,7 @@ RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/rele
     mkdir -p /app/.blueprint/extensions/blueprint/private/db && \
     touch /app/.blueprint/extensions/blueprint/private/db/installed_extensions && \
     echo '<?php return [];' > /app/.blueprint/extensions/blueprint/private/extensionfs.php && \
-    echo 'APP_KEY=' > .env && php artisan key:generate --force && \
+    php artisan key:generate --force && \
     bash blueprint.sh -i blueprint && \
     rm release.zip && rm .env
 
