@@ -17,7 +17,9 @@ RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/rele
     chmod +x blueprint.sh && \
     yarn add cross-env && \
     cp .env.example .env && \
-    php artisan key:generate --force && \
+    echo 'APP_KEY=' > .env && php artisan key:generate --force && \
+    mkdir -p /app/.blueprint/extensions/blueprint/private/ && \
+    touch /app/.blueprint/extensions/blueprint/private/extensionfs.php && \
     bash blueprint.sh -i blueprint && \
     rm release.zip && rm .env
 
