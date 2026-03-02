@@ -62,11 +62,7 @@ services:
       - cache
     volumes:
       - "/srv/pterodactyl/var/:/app/var/"
-      - "/srv/pterodactyl/nginx/:/etc/nginx/http.d/"
-      - "/srv/pterodactyl/certs/:/etc/letsencrypt/"
       - "/srv/pterodactyl/logs/:/app/storage/logs"
-      # Montamos el .env también como volumen para asegurar que artisan lo vea si falla env_file
-      # Nota: env_file pasa las variables al proceso, pero si artisan busca el archivo físico, esto ayuda.
       - "/srv/pterodactyl/.env:/app/.env"
     environment:
       <<: [ *panel-environment, *mail-environment ]

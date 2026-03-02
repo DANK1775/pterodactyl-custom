@@ -7,6 +7,9 @@ if [ -f "/app/.bp_installed" ]; then
     exit 0
 fi
 
+export TERM=xterm
+export DEBIAN_FRONTEND=noninteractive
+
 echo "🚀 Iniciando proceso de instalación de Blueprint en el contenedor..."
 echo "Descargando e instalando Blueprint..."
 
@@ -22,15 +25,8 @@ unzip -o /app/release.zip
 chmod +x blueprint.sh
 yarn add cross-env
 
-# Ejecutamos la instalación de blueprint.
-# En este punto el .env ya existe en /app/ y está cargado por el entrypoint
-bash blueprint.sh -i blueprint
-
-rm release.zip
-
-# Dejamos una marca para que Pterodactyl sepa que ya está instalado en este volumen var/app
-touch /app/.bp_installed
-
+# Ejecutamos la instalación de blueprint pasando "y" automáticamente al prompt
+yes | bash blueprint.sh -i blueprint
 # Y tal como pediste: borramos el contenido del script para que no vuelva a ejecutarse
 # y lo reemplazamos por un simple "echo" en caso de que el entrypoint lo invoque de nuevo.
 cat << 'EOF' > "$0"
