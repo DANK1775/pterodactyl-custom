@@ -31,7 +31,8 @@ RUN mkdir -p /etc/my.cnf.d && \
 RUN mkdir -p /var/log/supervisord
 
 COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY ./bpinstaller.sh /bpinstaller.sh
+RUN chmod +x /entrypoint.sh /bpinstaller.sh
 
 # run entrypoint script (migration and setup) and then start supervisor
 ENTRYPOINT ["/entrypoint.sh"]
