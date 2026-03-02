@@ -4,25 +4,11 @@ USER root
 
 WORKDIR /app
 
-# install dependencies and blueprint
+# install basic dependencies (node/yarn) if needed for custom assets
 RUN apk update && \
     apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn ncurses mysql-client && \
     npm i -g yarn && \
     yarn install --frozen-lockfile
-
-# NO BORRAR blueprint.sh para que se pueda usar como herramienta CLI dentro del contenedor
-RUN URL=$(curl -s https://api.github.com/repos/BlueprintFramework/framework/releases/latest | grep 'browser_download_url' | grep 'release.zip' | cut -d '"' -f 4) && \
-    wget "$URL" -O release.zip && \
-    unzip -o release.zip && \
-    chmod +x blueprint.sh && \
-    yarn add cross-env && \
-    cp .env.example .env && \
-    mkdir -p /app/.blueprint/extensions/blueprint/private/db && \
-    touch /app/.blueprint/extensions/blueprint/private/db/installed_extensions && \
-    echo '<?php return [];' > /app/.blueprint/extensions/blueprint/private/extensionfs.php && \
-    php artisan key:generate --force && \
-    bash blueprint.sh -i blueprint && \
-    rm release.zip && rm .env
 
 # build assets
 RUN export NODE_OPTIONS=--openssl-legacy-provider && \
