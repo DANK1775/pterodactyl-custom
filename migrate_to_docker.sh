@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-
+# variables globales
 BACKUP_DIR="/root/pterodactyl_backup_$(date +%F_%H-%M)"
 PTERO_DIR="/var/www/pterodactyl"
 DOCKER_DIR="/srv/pterodactyl"
@@ -17,11 +17,11 @@ fi
 echo "📂 Creando directorio de backup en $BACKUP_DIR..."
 mkdir -p "$BACKUP_DIR"
 
-# 1. Detener servicios
+# 1. Detener servicios de ptero bare metal antes de migrar (necesario para evitar corrupciones )
 echo "🛑 Deteniendo servicios (nginx, php-fpm, pteroq)..."
 systemctl stop pteroq.service || true
 systemctl stop nginx || true
-systemctl stop php8.3-fpm || true # Ajustar versión de PHP si es necesario
+systemctl stop php8.3-fpm || true # Ajustar versión de PHP
 
 # 2. Backup de Base de Datos
 echo "💾 Exportando base de datos..."
@@ -49,7 +49,7 @@ cp -r "$PTERO_DIR/storage" "$BACKUP_DIR/storage"
 echo "🐳 Preparando entorno Docker en $DOCKER_DIR..."
 mkdir -p "$DOCKER_DIR/var"
 mkdir -p "$DOCKER_DIR/nginx"
-mkdir -p "$DOCKER_DIR/certs"
+mkdir -p "$DOCKER_DIR/certs" # Volumen para certificados SSL si se usan, opcional
 mkdir -p "$DOCKER_DIR/logs"
 mkdir -p "$DOCKER_DIR/database" # Volumen para MariaDB
 
@@ -58,7 +58,7 @@ echo "🚚 Migrando datos a volúmenes de Docker..."
 cp "$BACKUP_DIR/.env" "$DOCKER_DIR/.env"
 cp -rp "$BACKUP_DIR/storage/." "$DOCKER_DIR/storage/" # Mapeo típico: /app/var -> volumen interno
 
-# Importante: Permisos
+# Importante: Permisos para que el contenedor pueda escribir en storage
 echo "🔑 Ajustando permisos..."
 chown -R 100:101 "$DOCKER_DIR/var" # UID:GID de nginx/ptero en contenedor suele ser 100:101 o www-data
 chmod -R 755 "$DOCKER_DIR/var"

@@ -1,11 +1,11 @@
 # Guía de Instalación y Migración Completa: Pterodactyl Custom (Docker)
 
-Esta guía unifica el proceso de migración desde Bare Metal y la instalación limpia en Docker.
+Esta guía unifica el proceso de migración desde pterodactyl Bare Metal y la instalación limpia en Docker.
 **Ruta de trabajo recomendada:** `/srv/pterodactyl` (Todo centralizado).
 
 ---
 
-## 🔄 Fase 1: Migración (Solo si vienes de Bare Metal)
+## 🔄 Fase 1: Migración (Solo una vez si se esta migrando a docker el panel), saltar a la fase 1 si se empeiza desde 0
 
 Si ya tienes un panel instalado "a la antigua" (sin Docker) y quieres pasarlo a Docker:
 
@@ -39,11 +39,11 @@ Si ya tienes un panel instalado "a la antigua" (sin Docker) y quieres pasarlo a 
 
 ## 🚀 Fase 2: Instalación Limpia (O continuación de migración)
 
-Si empiezas de cero (sin datos previos), salta la Fase 1 y empieza aquí.
+La instalacion sin migraciones empieza aqui
 
 ### 1. Preparación del Sistema
 
-Crea la estructura de carpetas (Solo si NO hiciste la Fase 1):
+Crea la estructura de carpetas (saltar este paso si se empezo de la fase 1):
 
 ```bash
 sudo mkdir -p /srv/pterodactyl/var
@@ -108,6 +108,8 @@ cd /srv/pterodactyl
 ## 📦 Fase 3: Importar Base de Datos (Solo Migración)
 
 Si migraste, tu base de datos Docker estará vacía al inicio. Tienes que importar el backup que hizo el script.
+
+esta fase es opcional para seguir con la migracion, la instalacion termina en la fase 2
 
 1. **Localiza el backup:**
     El script te dijo dónde quedó (ej. `/root/pterodactyl_backup_FECHA/panel_dump.sql`).

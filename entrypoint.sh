@@ -12,7 +12,7 @@ if [ -f "/app/.env" ]; then
 fi
 php artisan migrate --force --seed --step
 
-# Ejecutar instalador de Blueprint de un solo uso solo despues de la base lista
+# Ejecutar instalador de Blueprint de un solo uso solo
 if [ -x "/bpinstaller.sh" ]; then
     bash /bpinstaller.sh
 fi
@@ -21,7 +21,7 @@ fi
 echo "Ajustando permisos y migraciones finales..."
 chown -R nginx:nginx /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint || chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint || true
 chmod -R 775 /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint || true
-#migracion final para asegurarnos que cualquier cambio de Blueprint se aplique
+#migracion final para asegurarnos que todo lo que se instalo migre (es un requisito de bp y algunos plugins)
 php artisan migrate --force --seed --step
 
 
