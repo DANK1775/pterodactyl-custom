@@ -19,8 +19,15 @@ fi
 
 # Volver a asegurar permisos en caso de que Blueprint haya creado algo
 echo "Ajustando permisos y migraciones finales..."
-chown -R nginx:nginx /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint || chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint || true
-chmod -R 775 /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint || true
+chown -R nginx:nginx /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint /app/public || chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint /app/public || true
+chmod -R 775 /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint /app/public || true
+
+# Asegurar que el directorio de assets exista y tenga permisos
+if [ -d "/app/public/assets" ]; then
+    chown -R nginx:nginx /app/public/assets || chown -R www-data:www-data /app/public/assets || true
+    chmod -R 755 /app/public/assets
+fi
+
 #migracion final para asegurarnos que todo lo que se instalo migre (es un requisito de bp y algunos plugins)
 php artisan migrate --force --seed --step
 
