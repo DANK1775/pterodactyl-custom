@@ -42,7 +42,7 @@ if [ -n "$CERT_FILE" ] && [ -n "$KEY_FILE" ]; then
     for conf in /etc/nginx/http.d/*.conf /etc/nginx/sites-available/default; do
         if [ -f "$conf" ]; then
             grep -q "listen 443" "$conf" || \
-            sed -i "s/listen 80;/listen 80;\n    listen 443 ssl http2;\n    ssl_certificate $CERT_FILE;\n    ssl_certificate_key $KEY_FILE;/g" "$conf"
+            sed -i "s|listen 80;|listen 80;\n    listen 443 ssl http2;\n    ssl_certificate $CERT_FILE;\n    ssl_certificate_key $KEY_FILE;|g" "$conf"
         fi
     done
 fi
