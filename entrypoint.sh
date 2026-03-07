@@ -24,6 +24,17 @@ chmod -R 775 /app/storage /app/bootstrap/cache /app/.blueprintrc /app/.blueprint
 #migracion final para asegurarnos que todo lo que se instalo migre (es un requisito de bp y algunos plugins)
 php artisan migrate --force --seed --step
 
+# Configurar SSL si se proveen certificados
+if [ -f "/etc/certs/fullchain.pem" ] && [ -f "/etc/certs/privkey.pem" ]; then
+    echo "Certificados detectados en /etc/certs/. Configurando Nginx para usar SSL..."
+    # Busca en cualquier archivo de coniguración de nginx para asegurarse de inyectar el SSL donde esté escuchando el puerto 80
+    for conf in /etc/nginx/http.d/*.conf /etc/nginx/sites-available/default; do
+        if [ -f "$conf" ]; then
+            grep -q "listen 443" "$conf" || \
+            sed -i 's/listen 80;/listen 80;\n    listen 443 ssl http2;\n    ssl_certificate \/etc\/certs\/fullchain.pem;\n    ssl_certificate_key \/etc\/certs\/privkey.pem;/g' "$conf"
+        fi
+    done
+fi
 
 echo "Iniciando Pterodactyl..."
 exec "$@"

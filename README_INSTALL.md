@@ -55,14 +55,28 @@ cd /srv/pterodactyl
 # (Aquí debes subir o crear tu docker-compose.yml, Dockerfile, entrypoint.sh y .env)
 ```
 
-### 2. Configuración de Secretos (CRÍTICO)
+### 2. Configuración de Secretos y SSL (CRÍTICO)
 
-1. **Verifica tu archivo .env:**
+1. **Configurar los Certificados SSL (Cloudflare u otros):**
+   Para que tu panel utilice HTTPS internamente, el contenedor lee directamente de la ruta `/etc/certs` de tu servidor.
+   Asegúrate de colocar tus archivos allí con los nombres correctos:
+
+   ```bash
+   sudo mkdir -p /etc/certs
+   # Coloca tu certificado y llave privada aquí:
+   # /etc/certs/cert.pem
+   # /etc/certs/key.pem
+   ```
+
+   *Nota: Si utilizas otros nombres, debes renombrarlos a `cert.pem` y `key.pem` o el contenedor no los detectará automáticamente.*
+
+2. **Verifica tu archivo .env:**
     Asegúrate de tener un archivo `.env` en `/srv/pterodactyl/`.
+    Asegúrate de que la variable `APP_URL` empiece por `https://` (ej. `APP_URL=https://panel.tudominio.com`).
     Si vienes de migración, el script ya lo puso ahí.
     Si es instalación limpia, crea uno nuevo.
 
-2. **Sincronizar Contraseña de Base de Datos:**
+3. **Sincronizar Contraseña de Base de Datos:**
     El `docker-compose.yml` debe tener la MISMA contraseña que el `.env`.
 
     * **Obtén la contraseña real:**

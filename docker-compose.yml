@@ -5,34 +5,16 @@ x-common:
     &db-environment
     MYSQL_PASSWORD: &db-password "CHANGE_ME"
     MYSQL_ROOT_PASSWORD: "CHANGE_ME_TOO"
-  panel: &panel-environment
-    APP_URL: "http://example.com"
-    # A list of valid timezones can be found here: http://php.net/manual/en/timezones.php
-    APP_TIMEZONE: "UTC"
-    APP_SERVICE_AUTHOR: "noreply@example.com"
-    # Uncomment the line below and set to a non-empty value if you want to use Let's Encrypt
-    # to generate an SSL certificate for the Panel.
-    # LE_EMAIL: ""
+  # Eliminados los bloques &panel-environment y &mail-environment
+  # porque confunden y sobreescriben al archivo .env principal.
 
-    #Arix license:
-    ARIX_LICENSE_KEY: "CHANGE_ME_ARIX_LICENSE_KEY"
-
-  mail: &mail-environment
-    MAIL_FROM: "noreply@example.com"
-    MAIL_DRIVER: "smtp"
-    MAIL_HOST: "mail"
-    MAIL_PORT: "1025"
-    MAIL_USERNAME: ""
-    MAIL_PASSWORD: ""
-    MAIL_ENCRYPTION: "true"
-
-#
-# ------------------------------------------------------------------------------------------
-# DANGER ZONE BELOW
-#
-# The remainder of this file likely does not need to be changed. Please only make modifications
-# below if you understand what you are doing.
-#
+  #
+  # ------------------------------------------------------------------------------------------
+  # DANGER ZONE BELOW
+  #
+  # The remainder of this file likely does not need to be changed. Please only make modifications
+  # below if you understand what you are doing.
+  #
 services:
   database:
     image: mariadb:10.5
@@ -64,8 +46,12 @@ services:
       - "/srv/pterodactyl/var/:/app/var/"
       - "/srv/pterodactyl/logs/:/app/storage/logs"
       - "/srv/pterodactyl/.env:/app/.env"
+      # Monta los certificados de Cloudflare al contenedor para usar SSL internamente.
+      # Renombra o asegúrate de que sean "cert.pem" y "key.pem" en /etc/certs del servidor base.
+      - "/etc/certs:/etc/certs:ro"
+    # Hemos eliminado la inyección repetitiva de environment: <<: [ *panel-environment, *mail-environment ]
+    # Ahora dejará que /app/.env (montado arriba como bind) sea la única fuente de la verdad para Laravel.
     environment:
-      <<: [ *panel-environment, *mail-environment ]
       DB_PASSWORD: *db-password
       APP_ENV: "production"
       APP_ENVIRONMENT_ONLY: "false"
