@@ -39,10 +39,10 @@ fi
 if [ -n "$CERT_FILE" ] && [ -n "$KEY_FILE" ]; then
     echo "Certificados detectados en /etc/certs/. Configurando Nginx para usar SSL..."
     # Busca en cualquier archivo de coniguración de nginx para asegurarse de inyectar el SSL donde esté escuchando el puerto 80
-    for conf in /etc/nginx/http.d/*.conf /etc/nginx/sites-available/default; do
+    for conf in /etc/nginx/http.d/*.conf; do
         if [ -f "$conf" ]; then
             grep -q "listen 443" "$conf" || \
-            sed -i "s|listen 80;|listen 80;\n    listen 443 ssl http2;\n    ssl_certificate $CERT_FILE;\n    ssl_certificate_key $KEY_FILE;|g" "$conf"
+            sed -i "s|listen 80;|listen 80;\n    listen 443 ssl;\n    http2 on;\n    ssl_certificate $CERT_FILE;\n    ssl_certificate_key $KEY_FILE;|g" "$conf"
         fi
     done
 fi
