@@ -43,6 +43,15 @@ if [ -n "$CERT_FILE" ] && [ -n "$KEY_FILE" ]; then
         if [ -f "$conf" ]; then
             grep -q "listen 443" "$conf" || \
             sed -i "s|listen 80;|listen 80;\n    listen 443 ssl;\n    http2 on;\n    ssl_certificate $CERT_FILE;\n    ssl_certificate_key $KEY_FILE;|g" "$conf"
+
+            # Reemplazar server_name _ por el dominio de APP_URL si existe
+            if [ -f "/app/.env" ]; then
+                APP_DOMAIN=$(grep '^APP_URL=' /app/.env | cut -d'=' -f2 | tr -d '"' | sed 's|^https://||; s|^http://||; s|/.*||')
+                if [ -n "$APP_DOMAIN" ]; then
+                    sed -i "s|server_name _;|server_name $APP_DOMAIN;|g" "$conf"
+                    echo "Configurado server_name a $APP_DOMAIN en $conf"
+                fi
+            fi
         fi
     done
 fi
