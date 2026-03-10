@@ -37,8 +37,8 @@ services:
     restart: always
     env_file: .env
     ports:
-      - "80:80"
-      - "443:443"
+      - "9191:80"
+      - "8432:443"
     links:
       - database
       - cache
