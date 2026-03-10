@@ -14,7 +14,21 @@ php artisan migrate --force --seed --step
 
 # Ejecutar instalador de Blueprint de un solo uso solo
 if [ -x "/bpinstaller.sh" ]; then
+    # Ejecutar primero el instalador de Blueprint (que incluye su propia instalación de dependencias base)
     bash /bpinstaller.sh
+
+    # Después de instalar Blueprint, ahora sí reconstruimos los assets del panel modificado
+    echo "Reconstruyendo assets del panel modificado por Blueprint..."
+
+    # 1. Asegurar dependencias de Node
+    yarn install --frozen-lockfile
+
+    # 2. Ejecutar comando de Blueprint para inyectar/preparar assets en resources
+    php artisan blueprint:build --no-interaction || echo "Fallo blueprint:build, continuando..."
+
+    # 3. Compilar producción final (Webpack/Vite)
+    export NODE_OPTIONS=--openssl-legacy-provider
+    yarn run build:production
 fi
 
 # Volver a asegurar permisos en caso de que Blueprint haya creado algo
