@@ -1,7 +1,7 @@
 #!/bin/bash
-set -e
+set -eo pipefail
 
-# Variable de control extra (opcional pero recomendada)
+# Guardia: si Blueprint ya fue instalado en este contenedor, salir sin hacer nada
 if [ -f "/app/.blueprintrc" ] && [ -f "/app/blueprint.sh" ]; then
     echo "Blueprint ya se encuentra instalado. Saltando."
     exit 0
@@ -11,7 +11,6 @@ export TERM=xterm
 export DEBIAN_FRONTEND=noninteractive
 
 echo "🚀 Iniciando proceso de instalación de Blueprint en el contenedor..."
-echo "Descargando e instalando Blueprint..."
 
 # Detectar usuario web correcto (en Alpine/Pterodactyl suele ser nginx, en otras imágenes www-data)
 if id "nginx" &>/dev/null; then
@@ -24,30 +23,30 @@ fi
 
 echo "Detectado usuario web: $WEBUSER"
 
-# Creamos la configuración para Blueprint
-echo \
-"WEBUSER=\"$WEBUSER\";
-OWNERSHIP=\"$OWNERSHIP\";
-USERSHELL=\"/bin/bash\";" > /app/.blueprintrc
+# Crear la configuración de Blueprint (.blueprintrc) antes de ejecutar su instalador
+cat > /app/.blueprintrc << BPRC
+WEBUSER="$WEBUSER";
+OWNERSHIP="$OWNERSHIP";
+USERSHELL="/bin/bash";
+BPRC
 
-# Descargar release oficial usando la URL directa de la documentación
-wget "https://github.com/BlueprintFramework/framework/releases/latest/download/release.zip" -O /app/release.zip
-unzip -o /app/release.zip
+# Descargar el release oficial de Blueprint
+echo "Descargando Blueprint desde GitHub Releases..."
+wget -q "https://github.com/BlueprintFramework/framework/releases/latest/download/release.zip" -O /app/release.zip
+
+# Extraer en /app (directorio de trabajo del panel)
+cd /app
+unzip -o release.zip
+rm -f release.zip
 chmod +x blueprint.sh
 
-# Instalar dependencias de Node antes de ejecutar Blueprint (según doc)
+# Instalar dependencias de Node antes de ejecutar Blueprint (requerido por el instalador)
 echo "Instalando dependencias de yarn..."
 yarn install --frozen-lockfile
 
-# Ejecutar el instalador de Blueprint
-# La documentación dice "bash blueprint.sh", usaremos yes para automatizar los prompts
+# Ejecutar el instalador de Blueprint automatizando sus prompts interactivos con 'yes'
+# pipefail garantiza que un error en blueprint.sh se propague correctamente
 echo "Ejecutando instalador de Blueprint..."
-yes | bash blueprint.sh
-# Y tal como pediste: borramos el contenido del script para que no vuelva a ejecutarse
-# y lo reemplazamos por un simple "echo" en caso de que el entrypoint lo invoque de nuevo.
-cat << 'EOF' > "$0"
-#!/bin/bash
-echo "✅ Blueprint ya fue instalado en este contenedor previamente (script vaciado)."
-EOF
+yes | bash blueprint.sh || { echo "❌ Error: el instalador de Blueprint falló. Revisa los logs anteriores."; exit 1; }
 
 echo "✨ Instalación de Blueprint completada exitosamente!"

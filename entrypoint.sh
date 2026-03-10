@@ -1,6 +1,5 @@
 #!/bin/bash
-set -e
-
+set -eo pipefail
 
 echo "Esperando a la base de datos..."
 sleep 10
@@ -12,12 +11,12 @@ if [ -f "/app/.env" ]; then
 fi
 php artisan migrate --force --seed --step
 
-# Ejecutar instalador de Blueprint de un solo uso solo
-if [ -x "/bpinstaller.sh" ]; then
-    # Ejecutar primero el instalador de Blueprint (que incluye su propia instalación de dependencias base)
+# Instalar Blueprint y reconstruir assets SOLO si aún no está instalado.
+# La guardia usa los mismos archivos que comprueba bpinstaller.sh.
+if [ ! -f "/app/.blueprintrc" ] || [ ! -f "/app/blueprint.sh" ]; then
     bash /bpinstaller.sh
 
-    # Después de instalar Blueprint, ahora sí reconstruimos los assets del panel modificado
+    # Después de instalar Blueprint, reconstruir los assets del panel modificado
     echo "Reconstruyendo assets del panel modificado por Blueprint..."
 
     # 1. Asegurar dependencias de Node

@@ -1,4 +1,4 @@
-name: Custon Pterodactyl Build
+name: Custom Pterodactyl Build
 
 on:
   push:
@@ -46,6 +46,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile
           platforms: ${{ matrix.platform }}
           push: true
           outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
