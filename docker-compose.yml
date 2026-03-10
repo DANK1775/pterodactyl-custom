@@ -3,8 +3,8 @@ x-common:
     # Do not remove the "&db-password" from the end of the line below, it is important
     # for Panel functionality.
     &db-environment
-    MYSQL_PASSWORD: &db-password "CHANGE_ME"
-    MYSQL_ROOT_PASSWORD: "CHANGE_ME_TOO"
+    MYSQL_PASSWORD: &db-password "${DB_PASSWORD}"
+    MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
   # Eliminados los bloques &panel-environment y &mail-environment
   # porque confunden y sobreescriben al archivo .env principal.
 
@@ -52,15 +52,12 @@ services:
     # Hemos eliminado la inyección repetitiva de environment: <<: [ *panel-environment, *mail-environment ]
     # Ahora dejará que /app/.env (montado arriba como bind) sea la única fuente de la verdad para Laravel.
     environment:
-      DB_PASSWORD: *db-password
-      APP_ENV: "production"
-      APP_ENVIRONMENT_ONLY: "false"
-      CACHE_DRIVER: "redis"
-      SESSION_DRIVER: "redis"
-      QUEUE_DRIVER: "redis"
-      REDIS_HOST: "cache"
-      DB_HOST: "database"
-      DB_PORT: "3306"
+      - DB_PASSWORD=${DB_PASSWORD}
+      - APP_ENV=${APP_ENV:-production}
+      - APP_ENVIRONMENT_ONLY=${APP_ENVIRONMENT_ONLY:-false}
+      - REDIS_HOST=${REDIS_HOST:-cache}
+      - DB_HOST=${DB_HOST:-database}
+      - DB_PORT=${DB_PORT:-3306}
 
 networks:
   default:
