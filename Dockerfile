@@ -6,7 +6,7 @@ WORKDIR /app
 
 # install basic dependencies (node/yarn) if needed for custom assets
 RUN apk update && \
-    apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn ncurses mysql-client && \
+    apk add --no-cache ca-certificates curl git gnupg jq unzip wget zip bash tar sed nodejs npm yarn ncurses mysql-client && \
     npm i -g yarn && \
     yarn install --frozen-lockfile
 
