@@ -14,20 +14,23 @@ php artisan migrate --force --seed --step
 # Instalar Blueprint y reconstruir assets SOLO si aún no está instalado.
 # La guardia usa los mismos archivos que comprueba bpinstaller.sh.
 if [ ! -f "/app/.blueprintrc" ] || [ ! -f "/app/blueprint.sh" ]; then
+    echo "Instalando Blueprint framework..."
     bash /bpinstaller.sh
 
     # Después de instalar Blueprint, reconstruir los assets del panel modificado
     echo "Reconstruyendo assets del panel modificado por Blueprint..."
 
-    # 1. Asegurar dependencias de Node
+    # 1. Asegurar todas las dependencias de Node (ahora necesitamos las dev también para build)
     yarn install --frozen-lockfile
 
     # 2. Ejecutar comando de Blueprint para inyectar/preparar assets en resources
-    php artisan blueprint:build --no-interaction || echo "Fallo blueprint:build, continuando..."
+    php artisan blueprint:build --no-interaction || echo "⚠️  Fallo blueprint:build, continuando..."
 
     # 3. Compilar producción final (Webpack/Vite)
     export NODE_OPTIONS=--openssl-legacy-provider
     yarn run build:production
+else
+    echo "Blueprint ya está instalado, saltando instalación."
 fi
 
 # Volver a asegurar permisos en caso de que Blueprint haya creado algo
