@@ -5,8 +5,9 @@ USER root
 WORKDIR /app
 
 # install basic dependencies (node/yarn) if needed for custom assets
+# jq agregado para análisis robusto de JSON en el instalador de Blueprint (PR #571)
 RUN apk update && \
-    apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn ncurses mysql-client && \
+    apk add --no-cache ca-certificates curl git gnupg unzip wget zip bash tar sed nodejs npm yarn ncurses mysql-client jq && \
     npm i -g yarn && \
     yarn install --frozen-lockfile
 
