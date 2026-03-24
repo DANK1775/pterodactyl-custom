@@ -7,7 +7,7 @@ set -eo pipefail
 # ──────────────────────────────────────────────────────────────
 # Normalizar saltos de línea CRLF (Windows) a LF para que grep/sed funcionen
 if [ -f "/app/.env" ]; then
-    sed -i 's/\r//' /app/.env
+    sed 's/\r//' /app/.env > /tmp/.env.tmp && cat /tmp/.env.tmp > /app/.env && rm /tmp/.env.tmp
 fi
 
 if [ ! -s "/app/.env" ]; then
@@ -48,7 +48,7 @@ fi
 if grep -q '^APP_KEY=$' /app/.env || grep -q '^APP_KEY=""' /app/.env; then
     echo "Generando APP_KEY..."
     APP_KEY_VALUE=$(php -r "echo 'base64:' . base64_encode(random_bytes(32));")
-    sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY_VALUE}|" /app/.env
+    sed "s|^APP_KEY=.*|APP_KEY=${APP_KEY_VALUE}|" /app/.env > /tmp/.env.tmp && cat /tmp/.env.tmp > /app/.env && rm /tmp/.env.tmp
     echo "APP_KEY generado: ${APP_KEY_VALUE}"
 fi
 
