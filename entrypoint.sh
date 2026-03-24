@@ -1,14 +1,58 @@
 #!/bin/bash
 set -eo pipefail
 
+# ──────────────────────────────────────────────────────────────
+# Auto-bootstrap: generar .env si no existe o falta APP_KEY
+# Esto permite que un clone fresco funcione con solo "docker compose up -d"
+# ──────────────────────────────────────────────────────────────
+if [ ! -s "/app/.env" ]; then
+    echo "Archivo .env no encontrado o vacío. Generando configuración inicial..."
+    cat > /app/.env <<'ENVEOF'
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=
+APP_THEME=pterodactyl
+APP_TIMEZONE=UTC
+APP_URL=http://localhost
+APP_ENVIRONMENT_ONLY=false
+DB_HOST=database
+DB_PORT=3306
+DB_DATABASE=panel
+DB_USERNAME=pterodactyl
+DB_PASSWORD=pterodactyl_secret_pw
+CACHE_DRIVER=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+REDIS_HOST=cache
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+MAIL_DRIVER=log
+MAIL_HOST=localhost
+MAIL_PORT=25
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=null
+MAIL_FROM=no-reply@example.com
+MAIL_FROM_NAME="Pterodactyl Panel"
+HASHIDS_SALT=
+HASHIDS_LENGTH=8
+ENVEOF
+fi
+
+# Generar APP_KEY si está vacío
+if grep -q '^APP_KEY=$' /app/.env || grep -q '^APP_KEY=""' /app/.env; then
+    echo "Generando APP_KEY..."
+    APP_KEY_VALUE=$(php -r "echo 'base64:' . base64_encode(random_bytes(32));")
+    sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY_VALUE}|" /app/.env
+    echo "APP_KEY generado: ${APP_KEY_VALUE}"
+fi
+
+chmod 644 /app/.env
+chown nginx:nginx /app/.env || chown www-data:www-data /app/.env || true
+
 echo "Esperando a la base de datos..."
 sleep 10
 
-# Asegurar permisos base y migrar Laravel original ANTES de instalar mods
-if [ -f "/app/.env" ]; then
-    chmod 644 /app/.env
-    chown nginx:nginx /app/.env || chown www-data:www-data /app/.env || true
-fi
 php artisan migrate --force --seed --step
 
 # Instalar Blueprint y reconstruir assets SOLO si aún no está instalado.
@@ -31,6 +75,21 @@ if [ ! -f "/app/.blueprintrc" ] || [ ! -f "/app/blueprint.sh" ]; then
     yarn run build:production
 else
     echo "Blueprint ya está instalado, saltando instalación."
+fi
+
+# Publicar assets de Blueprint y extensiones en public/
+# Esto es necesario porque Blueprint genera los assets en .blueprint/ pero no los
+# copia automáticamente al directorio público servido por Nginx.
+if [ -d "/app/.blueprint/extensions" ]; then
+    echo "Publicando assets de extensiones Blueprint..."
+    for ext_dir in /app/.blueprint/extensions/*/assets; do
+        if [ -d "$ext_dir" ]; then
+            ext_name=$(basename "$(dirname "$ext_dir")")
+            mkdir -p "/app/public/assets/extensions/$ext_name"
+            cp -r "$ext_dir"/* "/app/public/assets/extensions/$ext_name/" 2>/dev/null || true
+            echo "  -> Assets publicados para: $ext_name"
+        fi
+    done
 fi
 
 # Volver a asegurar permisos en caso de que Blueprint haya creado algo

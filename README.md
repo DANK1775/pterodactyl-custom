@@ -1,46 +1,162 @@
 # Pterodactyl Panel Custom - Docker & Blueprint
 
-Este proyecto toma la imagen oficial de Docker de [Pterodactyl Panel](https://pterodactyl.io/) y la extiende agregando automatizaciones clave para el despliegue y migracion, facilitando la transición y personalización del panel.
+Este proyecto toma la imagen oficial de Docker de [Pterodactyl Panel](https://pterodactyl.io/) y la extiende con automatizaciones para el despliegue, migración y personalización del panel mediante [Blueprint](https://blueprint.zip/).
 
-## 🚀 ¿De qué trata este proyecto?
+## Inicio Rápido
 
-El objetivo principal es simplificar el despliegue y proporcionar herramientas para facilitar el CI/CD y mantencion del panel
+### Requisitos
 
-este repo tiene las siguientes automatizaciones:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) o Docker Engine (Linux)
+- Git
 
-- **Migración desde Bare-metal a Docker**: Incluye scripts diseñados para tomar toda la base de datos de una instalación de Pterodactyl directa en un servidor (bare-metal) y portarla automáticamente al entorno seguro y aislado de Docker.
-- **Auto-instalación de Blueprint**: Una vez que el panel se instaló y configuró, el contenedor se encarga de instalar automáticamente el framework [Blueprint](https://blueprint.zip/), dejándolo listo para que puedas instalar modificaciones, temas y addons sin esfuerzo.
-  - **Mejoras integradas desde PR #571**: Instalación robusta con manejo de errores mejorado, validación de dependencias (Node.js 20, Yarn), descarga con timeouts y fallbacks, y verificación de archivos.
-- **Personalización lista para usar**: Scripts como `entrypoint.sh` se encargan de orquestar el despliegue, preparando las migraciones de base de datos e instalando las utilidades antes de arrancar el servidor web.
+### Instalación
 
-## ⚠️ Tareas Pendientes y Mejoras (To-Do)
+```bash
+git clone https://github.com/DANK1775/pterodactyl-custom.git
+cd pterodactyl-custom
+```
 
-El proyecto aún se encuentra en desarrollo en áreas de seguridad y exposición a internet. Faltan por arreglar o implementar las siguientes características:
+**Windows:**
+```
+start.bat
+```
 
-- [ ] **Configuración de TLS y SSL**: Faltan por configurar adecuadamente los certificados SSL/TLS para cifrar el tráfico web (HTTPS).
-- [ ] **Hardening y Seguridad**: Es imperativo mejorar la seguridad general del contenedor, revisar los permisos, variables de entorno y la configuración de los accesos a los volúmenes para tener un entorno 100% apto para producción.
+**Linux / Mac:**
+```bash
+bash start.sh
+```
 
-## 🎯 Mejoras Recientes - Integración PR #571
+Esto automáticamente:
+1. Genera `.env` con un `APP_KEY` único desde `.env.example`
+2. Crea los directorios de datos (`data/`)
+3. Levanta los contenedores con `docker compose up -d`
 
-Se han integrado las mejoras del [PR #571 de pterodactyl-installer](https://github.com/pterodactyl-installer/pterodactyl-installer/pull/571) para la instalación de Blueprint:
+### Primer acceso
 
-### Mejoras Implementadas:
-- ✅ **Validación de dependencias robusta**: Verifica Node.js 20+ y Yarn antes de la instalación
-- ✅ **Descarga con manejo de errores**: Timeouts configurables (30s conexión, 300s descarga)
-- ✅ **Análisis JSON mejorado**: Usa `jq` cuando está disponible, con fallback a grep/cut
-- ✅ **URL de fallback**: Si falla la detección de la última versión, usa URL directa
-- ✅ **Verificación de archivos**: Valida que los archivos descargados no estén vacíos
-- ✅ **Instalación de producción**: Usa `yarn install --production` para dependencias mínimas
-- ✅ **Permisos correctos**: Establece ownership apropiado después de la instalación
-- ✅ **Mejores mensajes de error**: Mensajes claros y descriptivos con emojis
+Espera a que el panel termine de arrancar (migraciones + Blueprint):
 
-### Archivos Modificados:
-- `bpinstaller.sh`: Lógica de instalación mejorada basada en el PR
-- `Dockerfile`: Agregado `jq` para análisis JSON robusto
-- `entrypoint.sh`: Flujo mejorado con mensajes más claros
+```bash
+docker compose logs -f panel
+```
 
-## 📖 Instrucciones de Uso y Configuración
+Cuando veas `Iniciando Pterodactyl...`, crea tu usuario administrador:
 
-Para aprender a instalar este proyecto, configurar tus contenedores con `docker-compose.yml` o utilizar los scripts de migración de la base de datos, revisa la guía adjunta:
+```bash
+docker compose exec panel php artisan p:user:make
+```
 
-👉 **[Ver Guía de Instalación (README_INSTALL.md)](README_INSTALL.md)**
+Accede al panel en **http://localhost**.
+
+---
+
+## Estructura del Proyecto
+
+```
+pterodactyl-custom/
+├── .env.example        # Template de configuración (se copia a .env)
+├── .gitattributes      # Fuerza LF en scripts (evita problemas CRLF en Windows)
+├── docker-compose.yml  # Orquestación de servicios
+├── Dockerfile          # Imagen custom del panel
+├── entrypoint.sh       # Bootstrap: migraciones, Blueprint, assets, SSL
+├── bpinstaller.sh      # Instalador de Blueprint framework
+├── start.sh            # Script de inicio (Linux/Mac)
+├── start.bat           # Script de inicio (Windows)
+├── data/               # Datos persistentes (NO se sube al repo)
+│   ├── database/       # MariaDB
+│   ├── var/            # Archivos del panel
+│   ├── logs/           # Logs de Laravel
+│   └── certs/          # Certificados SSL (opcional)
+```
+
+### Servicios
+
+| Servicio | Imagen | Puerto |
+|----------|--------|--------|
+| panel | ghcr.io/dank1775/pterodactyl-custom:latest | 80, 443 |
+| database | mariadb:10.5 | 3306 (interno) |
+| cache | redis:alpine | 6379 (interno) |
+
+---
+
+## Configuración
+
+### Variables de Entorno
+
+El archivo `.env` es la fuente de verdad para Laravel. Las variables principales:
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `APP_URL` | `http://localhost` | URL pública del panel |
+| `APP_KEY` | (auto-generado) | Clave de encriptación |
+| `DB_PASSWORD` | `pterodactyl_secret_pw` | Contraseña de la base de datos |
+| `APP_TIMEZONE` | `UTC` | Zona horaria |
+
+### SSL / HTTPS
+
+Para habilitar SSL, coloca tus certificados en `data/certs/`:
+
+```
+data/certs/cert.pem      # Certificado
+data/certs/key.pem       # Llave privada
+```
+
+El entrypoint detecta y configura Nginx automáticamente. También acepta `fullchain.pem` + `privkey.pem`.
+
+Actualiza `APP_URL` en `.env` a `https://tu-dominio.com`.
+
+---
+
+## Migración desde Bare-metal
+
+Si ya tienes un panel instalado sin Docker, consulta la guía de migración:
+
+**[Ver Guía de Migración (README_INSTALL.md)](README_INSTALL.md)**
+
+---
+
+## Características
+
+- **Auto-bootstrap**: Un solo comando para levantar todo desde un clone fresco
+- **Blueprint pre-instalado**: Framework de extensiones listo para usar
+- **Entrypoint inteligente**: Genera `.env` y `APP_KEY` si faltan, ejecuta migraciones, instala Blueprint y publica assets automáticamente
+- **Compatible Windows/Linux/Mac**: Scripts de inicio para cada plataforma + `.gitattributes` para line endings
+- **SSL auto-configurado**: Detecta certificados en `data/certs/` y configura Nginx
+
+### Mejoras del instalador Blueprint (PR #571)
+
+- Validación de dependencias (Node.js 20+, Yarn)
+- Descargas con timeouts y fallbacks
+- Análisis JSON con `jq` (fallback a grep/cut)
+- Verificación de archivos descargados
+- Permisos correctos post-instalación
+
+---
+
+## Comandos Útiles
+
+```bash
+# Ver logs en tiempo real
+docker compose logs -f panel
+
+# Reiniciar panel
+docker compose restart panel
+
+# Crear usuario admin
+docker compose exec panel php artisan p:user:make
+
+# Entrar al contenedor
+docker compose exec panel sh
+
+# Parar todo
+docker compose down
+
+# Parar y borrar datos (DESTRUCTIVO)
+docker compose down && rm -rf data/
+```
+
+---
+
+## Tareas Pendientes
+
+- [ ] Hardening de seguridad para producción (permisos, variables sensibles)
+- [ ] Soporte para contraseñas de BD personalizables desde el script de inicio
