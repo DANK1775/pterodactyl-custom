@@ -5,6 +5,11 @@ set -eo pipefail
 # Auto-bootstrap: generar .env si no existe o falta APP_KEY
 # Esto permite que un clone fresco funcione con solo "docker compose up -d"
 # ──────────────────────────────────────────────────────────────
+# Normalizar saltos de línea CRLF (Windows) a LF para que grep/sed funcionen
+if [ -f "/app/.env" ]; then
+    sed -i 's/\r//' /app/.env
+fi
+
 if [ ! -s "/app/.env" ]; then
     echo "Archivo .env no encontrado o vacío. Generando configuración inicial..."
     cat > /app/.env <<'ENVEOF'
