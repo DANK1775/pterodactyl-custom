@@ -4,48 +4,38 @@ services:
     restart: always
     command: --default-authentication-plugin=mysql_native_password
     volumes:
-      - "./data/database:/var/lib/mysql"
-    environment:
-      MYSQL_PASSWORD: "pterodactyl_secret_pw"
-      MYSQL_ROOT_PASSWORD: "pterodactyl_secret_pw"
-      MYSQL_DATABASE: "panel"
-      MYSQL_USER: "pterodactyl"
+      - database_data:/var/lib/mysql
+    env_file:
+      - .env
 
   cache:
     image: redis:alpine
     restart: always
+    env_file:
+      - .env
 
   panel:
-    # Usamos la imagen generada por tu workflow de GitHub
     image: ghcr.io/dank1775/pterodactyl-custom:latest
     restart: always
     ports:
-      - "80:80"
-      - "443:443"
+      - "${PANEL_PORT_HTTP:-80}:80"
+      #- "${PANEL_PORT_HTTPS:-443}:443" este el para https pero como dokploy ya lo maneja lo quite
     links:
       - database
       - cache
     volumes:
-      - "./data/var/:/app/var/"
-      - "./data/logs/:/app/storage/logs"
-      - "./.env:/app/.env"
-      # Montar entrypoint local para poder actualizarlo sin rebuild de imagen
-      - "./entrypoint.sh:/entrypoint.sh"
-      # Monta los certificados de Cloudflare al contenedor para usar SSL internamente.
-      # Renombra o asegúrate de que sean "cert.pem" y "key.pem" en ./data/certs del servidor base.
-      - "./data/certs:/etc/certs:ro"
-    # Hemos eliminado la inyección repetitiva de environment: <<: [ *panel-environment, *mail-environment ]
-    # Ahora dejará que /app/.env (montado arriba como bind) sea la única fuente de la verdad para Laravel.
-    environment:
-      DB_PASSWORD: "pterodactyl_secret_pw"
-      APP_ENV: "production"
-      APP_ENVIRONMENT_ONLY: "false"
-      REDIS_HOST: "cache"
-      DB_HOST: "database"
-      DB_PORT: "3306"
+      - panel_var:/app/var/
+      - panel_logs:/app/storage/logs
+    env_file:
+      - .env
 
-#networks:
-  #default:
+volumes:
+  database_data:
+  panel_var:
+  panel_logs:
+
+    #networks:
+    #default:
     #ipam:
-      #config:
-              #- subnet: 10.7.0.0/24
+    #config:
+    #- subnet: 10.7.0.0/24
